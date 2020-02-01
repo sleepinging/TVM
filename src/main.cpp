@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-01 18:02:23
+ * @LastEditTime : 2020-02-01 18:38:20
  */
 
 #include <iostream>
@@ -91,12 +91,12 @@ enum TVM_OP
     POP,
 
     //call 100
-    //push ip
+    //push ip+1
     //ip+=100
     CALL_I,
 
     //call r0
-    //push ip
+    //push ip+1
     //ip+=r0
     CALL_R,
     CALL = CALL_R,
@@ -223,10 +223,21 @@ public:
                 pop();
                 ip += 1;
                 break;
+            case CALL_I:
+                call_i();
+                ip += 1;
+                break;
+            case CALL_R:
+                call_r();
+                ip += 1;
+                break;
+            case RET:
+                ret();
+                break;
             case END:
                 return 0;
             default:
-                std::cerr << "op code " << op << " err" << std::endl;
+                std::cerr << "op code " << op << " not find" << std::endl;
                 return -1;
             }
         }
@@ -346,7 +357,7 @@ private:
         //第1个操作数(立即数)
         int a = cs[ip];
         --sp;
-        ss[sp] = ip;
+        ss[sp] = ip + 1;
         ip += a;
     }
     void call_r()
@@ -354,7 +365,7 @@ private:
         //第1个操作数(寄存器)
         int a = cs[ip];
         --sp;
-        ss[sp] = ip;
+        ss[sp] = ip + 1;
         ip += r[a];
     }
     void ret(){
@@ -369,15 +380,24 @@ int main(int argc, char const *argv[])
     int TVM_DATA[100] = {0};
     using namespace TVM;
     int TVM_CODE[] = {
-        MOV_RI,R1,10,//r1=10
-        ADD_RI,R1,22,//r1+=22
-        PUSH_R,R1,//push r1
-        POP,R2,//pop r2
-        MOV_RI,R0,0,//r0=0
-        MOV_AR,R0,R2,//ds[r0]=r2
+        //子函数add
+        POP,R3,//保存IP
+        POP,R0,
+        POP,R1,
+        ADD,R0,R1,//r0+=r1
+        PUSH,R3,//恢复IP
+        RET,
+
+        MOV_RI,R1,11,//r1=10
+        MOV_RI,R2,32,//r2=32
+        PUSH,R1,
+        PUSH,R2,
+        CALL_I,-24,//到这里结束往前20字节
+        MOV_RI,R1,0,//r1=0
+        MOV_AR,R1,R0,//ds[r1]=r0
         END,
     };
-    TCPU tc(TVM_CODE,TVM_DATA);
+    TCPU tc(TVM_CODE+12,TVM_DATA);
     tc.Run();
     return 0;
 }
