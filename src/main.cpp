@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-01 19:08:55
+ * @LastEditTime : 2020-02-01 19:20:15
  */
 
 #include <iostream>
@@ -128,11 +128,11 @@ enum TVM_OP
     RET,
 
     //jmp 100
-    //ip+=100+1
+    //ip+=100
     JMP_I,
 
     //jmp r0
-    //ip+=r0+1
+    //ip+=r0
     JMP_R,
     JMP = JMP_R,
 
@@ -281,6 +281,14 @@ public:
             case CMP_RR:
                 cmp_rr();
                 ip += 2;
+                break;
+            case JMP_I:
+                jmp_i();
+                ip += 1;
+                break;
+            case JMP_R:
+                jmp_r();
+                ip += 1;
                 break;
             case PUSH_I:
                 push_i();
@@ -448,6 +456,17 @@ private:
             zf = 0;
         }
     }
+    void jmp_i(){
+        //第1个操作数(立即数)
+        int a = cs[ip];
+        ip += a;
+    }
+    void jmp_r()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        ip += r[a];
+    }
     void push_i()
     {
         //第1个操作数(立即数)
@@ -491,8 +510,10 @@ private:
 
 int main(int argc, char const *argv[])
 {
-    int TVM_DATA[100] = {0};
     using namespace TVM;
+    using namespace std;
+    int a = 101, b = 203;
+    int TVM_DATA[100] = {0};
     int TVM_CODE[] = {
         //子函数add
         POP,R3,//保存IP
@@ -502,17 +523,21 @@ int main(int argc, char const *argv[])
         PUSH,R3,//恢复IP
         RET,
 
-        MOV_RI,R1,11,//r1=10
-        MOV_RI,R2,32,//r2=32
+        MOV_RI,R1,a,//r1=a
+        MOV_RI,R2,b,//r2=b
         PUSH,R1,
         PUSH,R2,
         CALL_I,-24,//到这里结束往前20单位
         MOV_RI,R1,0,//r1=0
         MOV_AR,R1,R0,//ds[r1]=r0
         CMP_RR,R0,R1,
+        JMP_I,3,
+        ADD_RI,R0,1,
+        ADD_RI,R0,1,
         END,
     };
     TCPU tc(TVM_CODE+12,TVM_DATA);
     tc.Run();
+    cout<<"a+b=" << TVM_DATA[0] << endl;
     return 0;
 }
