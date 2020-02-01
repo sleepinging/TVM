@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-01 18:38:20
+ * @LastEditTime : 2020-02-01 19:08:55
  */
 
 #include <iostream>
@@ -67,12 +67,34 @@ enum TVM_OP
     DIV_RR,
     DIV = DIV_RR,
 
-    XOR,
-    AND,
+    //xor r0,10
+    //r0|=10
+    XOR_RI,
+
+    //xor r0,r1
+    //r0|=r1
+    XOR_RR,
+    XOR = XOR_RR,
+
+    //and r0,10
+    //r0&=10
+    AND_RI,
+
+    AND_RR,
+    AND = AND_RR,
+
     //左移
-    SHL,
+    //shl r0,1
+    //r0<<=1
+    SHL_RI,
+
+    SHL_RR,
+    SHL = SHL_RR,
+
     //右移
-    SHR,
+    SHR_RI,
+    SHR_RR,
+    SHR = SHR_RR,
 
     //push 1
     //--sp
@@ -105,18 +127,58 @@ enum TVM_OP
     //pop ip
     RET,
 
-    JMP,
-    CMP,
-    JE,
-    JNE,
-    JA,
-    JNA,
-    JB,
-    JNB,
+    //jmp 100
+    //ip+=100+1
+    JMP_I,
+
+    //jmp r0
+    //ip+=r0+1
+    JMP_R,
+    JMP = JMP_R,
+
+    //cmp r1,r2
+    //r1==r2 sf=0,zf=1
+    //r1<r2 sf=1,zf=0
+    //r1>r2 sf=0,zf=0
+    CMP_RI,
+
+    CMP_RR,
+    CMP = CMP_RR,
+
+    //je 100
+    //zf==0 ip+=100+1
+    JE_I,
+
+    //je r1
+    //zf==1 ip+=r0+1
+    JE_R,
+    JE = JE_R,
+
+    //jne 100
+    //zf==0 ip+=100+1
+    JNE_I,
+
+    JNE_R,
+    JNE = JNE_R,
+
+    //ja 100
+    //sf==0&&zf==0 ip+=100+1
+    JA_I,
+
+    JA_R,
+    JA = JA_R,
+
+    // JNA,
+
+    JB_I,
+
+    JB_R,
+    JB = JB_R,
+    // JNB,
 
     //nop
     NOP,
-    
+
     //结束虚拟机运行
     END,
 };
@@ -136,6 +198,7 @@ struct TCPU
     int r[4] = {0};
     //标志寄存器
     int sf = 0;
+    int zf = 0;
     //段寄存器
     int *ss = nullptr;
     int *ds = nullptr;
@@ -209,6 +272,14 @@ public:
                 break;
             case DIV_RR:
                 div_rr();
+                ip += 2;
+                break;
+            case CMP_RI:
+                cmp_ri();
+                ip += 2;
+                break;
+            case CMP_RR:
+                cmp_rr();
                 ip += 2;
                 break;
             case PUSH_I:
@@ -334,6 +405,49 @@ private:
         r[0] = r[a]/r[b];
         r[1] = r[a]%r[b];
     }
+    void cmp_ri(){
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(立即数)
+        int b = cs[ip + 1];
+        if (r[a] == b)
+        {
+            sf = 0;
+            zf = 1;
+        }
+        else if (r[a] < b)
+        {
+            sf = 1;
+            zf = 0;
+        }
+        else
+        {
+            sf = 0;
+            zf = 0;
+        }
+    }
+    void cmp_rr()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(立即数)
+        int b = cs[ip + 1];
+        if (r[a] == r[b])
+        {
+            sf = 0;
+            zf = 1;
+        }
+        else if (r[a] < r[b])
+        {
+            sf = 1;
+            zf = 0;
+        }
+        else
+        {
+            sf = 0;
+            zf = 0;
+        }
+    }
     void push_i()
     {
         //第1个操作数(立即数)
@@ -392,9 +506,10 @@ int main(int argc, char const *argv[])
         MOV_RI,R2,32,//r2=32
         PUSH,R1,
         PUSH,R2,
-        CALL_I,-24,//到这里结束往前20字节
+        CALL_I,-24,//到这里结束往前20单位
         MOV_RI,R1,0,//r1=0
         MOV_AR,R1,R0,//ds[r1]=r0
+        CMP_RR,R0,R1,
         END,
     };
     TCPU tc(TVM_CODE+12,TVM_DATA);
