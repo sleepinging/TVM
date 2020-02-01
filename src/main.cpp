@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-01 19:20:15
+ * @LastEditTime : 2020-02-01 19:39:52
  */
 
 #include <iostream>
@@ -146,23 +146,23 @@ enum TVM_OP
     CMP = CMP_RR,
 
     //je 100
-    //zf==0 ip+=100+1
+    //zf==0 ip+=100
     JE_I,
 
     //je r1
-    //zf==1 ip+=r0+1
+    //zf==1 ip+=r0
     JE_R,
     JE = JE_R,
 
     //jne 100
-    //zf==0 ip+=100+1
+    //zf==0 ip+=100
     JNE_I,
 
     JNE_R,
     JNE = JNE_R,
 
     //ja 100
-    //sf==0&&zf==0 ip+=100+1
+    //sf==0&&zf==0 ip+=100
     JA_I,
 
     JA_R,
@@ -170,6 +170,8 @@ enum TVM_OP
 
     // JNA,
 
+    //jb 100
+    //sf==1&&zf==0 ip+=100
     JB_I,
 
     JB_R,
@@ -288,6 +290,38 @@ public:
                 break;
             case JMP_R:
                 jmp_r();
+                ip += 1;
+                break;
+            case JE_I:
+                je_i();
+                ip += 1;
+                break;
+            case JE_R:
+                je_r();
+                ip += 1;
+                break;
+            case JNE_I:
+                jne_i();
+                ip += 1;
+                break;
+            case JNE_R:
+                jne_r();
+                ip += 1;
+                break;
+            case JA_I:
+                ja_i();
+                ip += 1;
+                break;
+            case JA_R:
+                ja_r();
+                ip += 1;
+                break;
+            case JB_I:
+                jb_i();
+                ip += 1;
+                break;
+            case JB_R:
+                jb_r();
                 ip += 1;
                 break;
             case PUSH_I:
@@ -467,6 +501,78 @@ private:
         int a = cs[ip];
         ip += r[a];
     }
+    void je_i()
+    {
+        if (zf == 1)
+        {
+            //第1个操作数(立即数)
+            int a = cs[ip];
+            ip += a;
+        }
+    }
+    void je_r()
+    {
+        if (zf == 1)
+        {
+            //第1个操作数(寄存器)
+            int a = cs[ip];
+            ip += r[a];
+        }
+    }
+    void jne_i()
+    {
+        if (zf == 0)
+        {
+            //第1个操作数(立即数)
+            int a = cs[ip];
+            ip += a;
+        }
+    }
+    void jne_r()
+    {
+        if (zf == 0)
+        {
+            //第1个操作数(寄存器)
+            int a = cs[ip];
+            ip += r[a];
+        }
+    }
+    void ja_i()
+    {
+        if (sf == 0 && zf == 0)
+        {
+            //第1个操作数(立即数)
+            int a = cs[ip];
+            ip += a;
+        }
+    }
+    void ja_r()
+    {
+        if (sf == 0 && zf == 0)
+        {
+            //第1个操作数(寄存器)
+            int a = cs[ip];
+            ip += r[a];
+        }
+    }
+    void jb_i()
+    {
+        if (sf == 1 && zf == 0)
+        {
+            //第1个操作数(立即数)
+            int a = cs[ip];
+            ip += a;
+        }
+    }
+    void jb_r()
+    {
+        if (sf == 1 && zf == 0)
+        {
+            //第1个操作数(寄存器)
+            int a = cs[ip];
+            ip += r[a];
+        }
+    }
     void push_i()
     {
         //第1个操作数(立即数)
@@ -530,9 +636,15 @@ int main(int argc, char const *argv[])
         CALL_I,-24,//到这里结束往前20单位
         MOV_RI,R1,0,//r1=0
         MOV_AR,R1,R0,//ds[r1]=r0
-        CMP_RR,R0,R1,
-        JMP_I,3,
+
+        //测试jmp等
+        MOV_RI,R0,0,//r0=0
+        MOV_RI,R1,1,//r1=0
+        MOV_RI,R2,3,//r2=3
+        CMP_RR,R0,R1,//r0 ? r1
+        JB_R,R2,
         ADD_RI,R0,1,
+        ADD_RI,R0,1,//是否会跳到这
         ADD_RI,R0,1,
         END,
     };
