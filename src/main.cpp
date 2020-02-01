@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-01 17:35:56
+ * @LastEditTime : 2020-02-01 18:02:23
  */
 
 #include <iostream>
@@ -83,7 +83,7 @@ enum TVM_OP
     //--sp
     //ss[sp]=r0
     PUSH_R,
-    PUSH=PUSH_R,
+    PUSH = PUSH_R,
 
     //pop r0
     //r0=ss[sp]
@@ -99,12 +99,12 @@ enum TVM_OP
     //push ip
     //ip+=r0
     CALL_R,
-    CALL=CALL_R,
+    CALL = CALL_R,
 
     //ret
     //pop ip
     RET,
-    
+
     JMP,
     CMP,
     JE,
@@ -113,6 +113,10 @@ enum TVM_OP
     JNA,
     JB,
     JNB,
+
+    //nop
+    NOP,
+    
     //结束虚拟机运行
     END,
 };
@@ -161,6 +165,8 @@ public:
             int op = cs[ip++];
             switch (op)
             {
+            case NOP:
+                break;
             case MOV_RI:
                 mov_ri();
                 ip += 2;
@@ -336,6 +342,25 @@ private:
         r[a] = ss[sp];
         ++sp;
     }
+    void call_i(){
+        //第1个操作数(立即数)
+        int a = cs[ip];
+        --sp;
+        ss[sp] = ip;
+        ip += a;
+    }
+    void call_r()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        --sp;
+        ss[sp] = ip;
+        ip += r[a];
+    }
+    void ret(){
+        ip = ss[sp];
+        ++sp;
+    }
 };
 } // namespace TVM
 
@@ -346,8 +371,10 @@ int main(int argc, char const *argv[])
     int TVM_CODE[] = {
         MOV_RI,R1,10,//r1=10
         ADD_RI,R1,22,//r1+=22
+        PUSH_R,R1,//push r1
+        POP,R2,//pop r2
         MOV_RI,R0,0,//r0=0
-        MOV_AR,R0,R1,//ds[r0]=r1
+        MOV_AR,R0,R2,//ds[r0]=r2
         END,
     };
     TCPU tc(TVM_CODE,TVM_DATA);
