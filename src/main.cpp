@@ -3,10 +3,10 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-01 17:21:39
+ * @LastEditTime : 2020-02-01 17:35:56
  */
 
-#include <stdio.h>
+#include <iostream>
 
 namespace TVM
 {
@@ -205,11 +205,22 @@ public:
                 div_rr();
                 ip += 2;
                 break;
+            case PUSH_I:
+                push_i();
+                ip += 1;
+                break;
+            case PUSH_R:
+                push_r();
+                ip += 1;
+                break;
+            case POP:
+                pop();
+                ip += 1;
+                break;
             case END:
                 return 0;
             default:
-                //异常
-                fprintf(stderr, "op code %d err\n", op);
+                std::cerr << "op code " << op << " err" << std::endl;
                 return -1;
             }
         }
@@ -305,6 +316,25 @@ private:
         int b = cs[ip + 1];
         r[0] = r[a]/r[b];
         r[1] = r[a]%r[b];
+    }
+    void push_i()
+    {
+        //第1个操作数(立即数)
+        int a = cs[ip];
+        --sp;
+        ss[sp] = a;
+    }
+    void push_r(){
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        --sp;
+        ss[sp] = r[a];
+    }
+    void pop(){
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        r[a] = ss[sp];
+        ++sp;
     }
 };
 } // namespace TVM
