@@ -2,8 +2,8 @@
  * @Description: TVM
  * @Author: taowentao
  * @Date: 2020-02-02 16:12:21
- * @LastEditors: taowentao
- * @LastEditTime: 2020-02-02 16:12:45
+ * @LastEditors  : taowentao
+ * @LastEditTime : 2020-02-02 16:33:51
  */
 #ifndef _H_TVM_H_
 #define _H_TVM_H_
@@ -12,6 +12,7 @@
 namespace TVM
 {
 typedef int VMINT;
+//目前支持的指令
 enum TVM_OP_CODE : VMINT
 {
     //不需要用到，用来计算指令个数的,同时可以判断是否为无效操作
