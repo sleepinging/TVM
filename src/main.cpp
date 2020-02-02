@@ -1,9 +1,9 @@
 /*
- * @Description: Do not edit
+ * @Description: TVM
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 12:28:16
+ * @LastEditTime : 2020-02-02 12:30:23
  */
 
 #include <iostream>
@@ -237,6 +237,10 @@ enum TVM_Reg
     R1,
     R2,
     R3,
+    R4,
+    R5,
+    R6,
+    R7,
 };
 
 struct TCPU
