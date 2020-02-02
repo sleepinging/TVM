@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 12:23:24
+ * @LastEditTime : 2020-02-02 12:28:16
  */
 
 #include <iostream>
@@ -409,6 +409,38 @@ private:
         r[0] = r[a]/r[b];
         r[1] = r[a]%r[b];
     }
+    void shl_ri()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(立即数)
+        int b = cs[ip + 1];
+        r[a] <<= b;
+    }
+    void shl_rr()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(寄存器)
+        int b = cs[ip + 1];
+        r[a] <<= r[b];
+    }
+    void shr_ri()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(立即数)
+        int b = cs[ip + 1];
+        r[a] >>= b;
+    }
+    void shr_rr()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(寄存器)
+        int b = cs[ip + 1];
+        r[a] >>= r[b];
+    }
     void xor_ri()
     {
         //第1个操作数(寄存器)
@@ -705,6 +737,10 @@ void Init(){
     ops[XOR_RI] = {XOR_RI, &TCPU::xor_ri, 2};
     ops[XOR_RR] = {XOR_RR, &TCPU::xor_rr, 2};
     ops[NOT] = {NOT, &TCPU::not_r, 1};
+    ops[SHL_RI] = {SHL_RI, &TCPU::shl_ri, 2};
+    ops[SHL_RR] = {SHL_RR, &TCPU::shl_rr, 2};
+    ops[SHR_RI] = {SHR_RI, &TCPU::shr_ri, 2};
+    ops[SHR_RR] = {SHR_RR, &TCPU::shr_rr, 2};
 
     ops[CMPSB] = {CMPSB, &TCPU::cmpsb, 2};
 
@@ -784,6 +820,12 @@ void test_vm(){
         MOV_RI,R0,10,
         MOV_RI,R1,200,
         NOT,R0,
+
+        //测试左右移
+        MOV_RI,R0,10,
+        MOV_RI,R1,2,
+        SHL_RI,R0,1,
+        SHR_RR,R0,R1,
 
         // //测试jmp等
         // MOV_RI,R0,0,//r0=0
