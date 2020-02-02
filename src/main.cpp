@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 12:30:23
+ * @LastEditTime : 2020-02-02 12:34:51
  */
 
 #include <iostream>
@@ -234,13 +234,32 @@ TVM_OP ops[END - START + 1] = {0};
 enum TVM_Reg
 {
     R0 = 0,
+    RA = R0,
+    EAX = R0,
+
     R1,
+    RB = R1,
+    EBX = R1,
+
     R2,
+    RC = R2,
+    ECX = R2,
+
     R3,
+    RD = R3,
+    EDX = R3,
+
     R4,
+    RE = R4,
+
     R5,
+    RF = R5,
+
     R6,
+    RG = R6,
+
     R7,
+    RH = R7,
 };
 
 struct TCPU
