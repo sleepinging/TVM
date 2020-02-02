@@ -3,18 +3,21 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-01 23:11:22
+ * @LastEditTime : 2020-02-02 12:05:04
  */
 
 #include <iostream>
 
 namespace TVM
 {
-enum TVM_OP
+enum TVM_OP_CODE
 {
+    //不需要用到，用来计算指令个数的,同时可以判断是否为无效操作
+    START=0,
+
     //mov r0,1
     //r0=1
-    MOV_RI = 0,
+    MOV_RI,
 
     //mov r0,r1
     //r0=r1
@@ -206,9 +209,24 @@ enum TVM_OP
     //结束虚拟机运行
     END,
 };
+
+class TCPU;
+struct TVM_OP
+{
+    //操作码
+    int op_code;
+    //对应的函数
+    void (TCPU::*fun)();
+    //几个操作数
+    int op_num;
+};
+
+//对应指令操作的数组
+TVM_OP ops[END - START + 1] = {0};
+
 enum TVM_Reg
 {
-    R0=0,
+    R0 = 0,
     R1,
     R2,
     R3,
@@ -249,163 +267,25 @@ public:
     int Run(){
         for (;;){
             //取操作指令,然后ip+1
-            int op = cs[ip++];
-            switch (op)
+            int op_code = cs[ip++];
+            switch (op_code)
             {
             case NOP:
-                break;
-            case MOV_RI:
-                mov_ri();
-                ip += 2;
-                break;
-            case MOV_RR:
-                mov_rr();
-                ip += 2;
-                break;
-            case MOV_AR:
-                mov_ar();
-                ip += 2;
-                break;
-            case MOV_AI:
-                mov_ai();
-                ip += 2;
-                break;
-            case MOV_R_IA:
-                mov_r_ia();
-                ip += 2;
-                break;
-            case MOV_R_RA:
-                mov_r_ra();
-                ip += 2;
-                break;
-            case ADD_RI:
-                add_ri();
-                ip += 2;
-                break;
-            case ADD_RR:
-                add_rr();
-                ip += 2;
-                break;
-            case SUB_RI:
-                sub_ri();
-                ip += 2;
-                break;
-            case SUB_RR:
-                sub_rr();
-                ip += 2;
-                break;
-            case MUL_RI:
-                mul_ri();
-                ip += 2;
-                break;
-            case MUL_RR:
-                mul_rr();
-                ip += 2;
-                break;
-            case DIV_RI:
-                div_ri();
-                ip += 2;
-                break;
-            case DIV_RR:
-                div_rr();
-                ip += 2;
-                break;
-            case CMP_RI:
-                cmp_ri();
-                ip += 2;
-                break;
-            case CMP_RR:
-                cmp_rr();
-                ip += 2;
-                break;
-            case CMPSB:
-                cmpsb();
-                ip += 2;
-                break;
-            case JMP_I:
-                jmp_i();
-                ip += 1;
-                break;
-            case JMP_R:
-                jmp_r();
-                ip += 1;
-                break;
-            case JE_I:
-                je_i();
-                ip += 1;
-                break;
-            case JE_R:
-                je_r();
-                ip += 1;
-                break;
-            case JNE_I:
-                jne_i();
-                ip += 1;
-                break;
-            case JNE_R:
-                jne_r();
-                ip += 1;
-                break;
-            case JA_I:
-                ja_i();
-                ip += 1;
-                break;
-            case JA_R:
-                ja_r();
-                ip += 1;
-                break;
-            case JAE_I:
-                jae_i();
-                ip += 1;
-                break;
-            case JAE_R:
-                jae_r();
-                ip += 1;
-                break;
-            case JB_I:
-                jb_i();
-                ip += 1;
-                break;
-            case JB_R:
-                jb_r();
-                ip += 1;
-                break;
-            case JBE_I:
-                jbe_i();
-                ip += 1;
-                break;
-            case JBE_R:
-                jbe_r();
-                ip += 1;
-                break;
-            case PUSH_I:
-                push_i();
-                ip += 1;
-                break;
-            case PUSH_R:
-                push_r();
-                ip += 1;
-                break;
-            case POP:
-                pop();
-                ip += 1;
-                break;
-            case CALL_I:
-                call_i();
-                ip += 1;
-                break;
-            case CALL_R:
-                call_r();
-                ip += 1;
-                break;
-            case RET:
-                ret();
                 break;
             case END:
                 return 0;
             default:
-                std::cerr << "op code " << op << " not find" << std::endl;
-                return -1;
+            {
+                TVM_OP op = ops[op_code];
+                if (op.op_code == 0)
+                {
+                    std::cerr << "op code " << op_code << " not support" << std::endl;
+                    return -1;
+                }
+                (this->*(op.fun))();
+                ip += op.op_num;
+                break;
+            }
             }
         }
         return 0;
@@ -740,7 +620,55 @@ private:
         ip = ss[sp];
         ++sp;
     }
+public:
+    friend void Init();
 };
+void Init(){
+    ops[MOV_RI] = {MOV_RI, &TCPU::mov_ri, 2};
+    ops[MOV_RR] = {MOV_RR, &TCPU::mov_rr, 2};
+    ops[MOV_AI] = {MOV_AI, &TCPU::mov_ai, 2};
+    ops[MOV_AR] = {MOV_AR, &TCPU::mov_ar, 2};
+    ops[MOV_R_RA] = {MOV_R_RA, &TCPU::mov_r_ra, 2};
+    ops[MOV_R_IA] = {MOV_R_IA, &TCPU::mov_r_ia, 2};
+    ops[ADD_RI] = {ADD_RI, &TCPU::add_ri, 2};
+    ops[ADD_RR] = {ADD_RR, &TCPU::add_rr, 2};
+    ops[SUB_RI] = {SUB_RI, &TCPU::sub_ri, 2};
+    ops[SUB_RR] = {SUB_RR, &TCPU::sub_rr, 2};
+    ops[MUL_RI] = {MUL_RI, &TCPU::mul_ri, 2};
+    ops[MUL_RR] = {MUL_RR, &TCPU::mul_rr, 2};
+    ops[DIV_RI] = {DIV_RI, &TCPU::div_ri, 2};
+    ops[DIV_RR] = {DIV_RR, &TCPU::div_rr, 2};
+
+    ops[CMPSB] = {CMPSB, &TCPU::cmpsb, 2};
+
+    ops[PUSH_I] = {PUSH_I, &TCPU::push_i, 1};
+    ops[PUSH_R] = {PUSH_R, &TCPU::push_r, 1};
+    ops[POP] = {POP, &TCPU::pop, 1};
+
+    ops[CALL_I] = {CALL_I, &TCPU::call_i, 1};
+    ops[CALL_R] = {CALL_R, &TCPU::call_r, 1};
+    ops[RET] = {RET, &TCPU::ret, 0};
+
+    ops[JMP_I] = {JMP_I, &TCPU::jmp_i, 1};
+    ops[JMP_R] = {JMP_R, &TCPU::jmp_r, 1};
+
+    ops[CMP_RI] = {CMP_RI, &TCPU::cmp_ri, 2};
+    ops[CMP_RR] = {CMP_RR, &TCPU::cmp_rr, 2};
+
+    ops[JE_I] = {JE_I, &TCPU::je_i, 1};
+    ops[JE_R] = {JE_R, &TCPU::je_r, 1};
+    ops[JNE_I] = {JNE_I, &TCPU::jne_i, 1};
+    ops[JNE_R] = {JNE_R, &TCPU::jne_r, 1};
+    ops[JA_I] = {JA_I, &TCPU::ja_i, 1};
+    ops[JA_R] = {JA_R, &TCPU::ja_r, 1};
+    ops[JAE_I] = {JAE_I, &TCPU::jae_i, 1};
+    ops[JAE_R] = {JAE_R, &TCPU::jae_r, 1};
+    ops[JB_I] = {JB_I, &TCPU::jb_i, 1};
+    ops[JB_R] = {JB_R, &TCPU::jb_r, 1};
+    ops[JBE_I] = {JBE_I, &TCPU::jbe_i, 1};
+    ops[JBE_R] = {JBE_R, &TCPU::jbe_r, 1};
+
+}
 } // namespace TVM
 
 #include <string>
@@ -785,15 +713,15 @@ void test_vm(){
         MOV_RI,R0,sizeof(stra)-1-1,
         CMPSB,R1,R2,
 
-        // //测试jmp等
-        // MOV_RI,R0,0,//r0=0
-        // MOV_RI,R1,1,//r1=1
-        // MOV_RI,R2,3,//r2=3
-        // CMP_RR,R0,R1,//r0 ? r1
-        // JAE_R,R2,
-        // ADD_RI,R0,1,
-        // ADD_RI,R0,1,//是否会跳到这
-        // ADD_RI,R0,1,
+        //测试jmp等
+        MOV_RI,R0,0,//r0=0
+        MOV_RI,R1,1,//r1=1
+        MOV_RI,R2,3,//r2=3
+        CMP_RR,R0,R1,//r0 ? r1
+        JAE_R,R2,
+        ADD_RI,R0,1,
+        ADD_RI,R0,1,//是否会跳到这
+        ADD_RI,R0,1,
         END,
     };
     TCPU tc(TVM_CODE+12,TVM_DATA);
@@ -854,7 +782,8 @@ bool test_vm_pwd(const string& name,const string&pwd){
 
 int main(int argc, char const *argv[])
 {
-    // test_vm();
+    TVM::Init();
+    test_vm();
     bool f=test_vm_pwd("123","234");
     cout << f << endl;
     f = test_vm_pwd("123", "123");
