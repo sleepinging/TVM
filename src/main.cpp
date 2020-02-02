@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 16:16:23
+ * @LastEditTime : 2020-02-02 16:24:40
  */
 
 #include <string>
@@ -137,6 +137,10 @@ bool test_vm_login(const string& name,const string&pwd){
         //je 1
         JE_I,1,
         //END
+        END,
+        //长度小于5也失败
+        CMP_RI,R0,5,
+        JAE_I,1,
         END,
         //mov r1,cname-ds //r1=(VMINT*)cname-ds
         MOV_RI,R1,addr2int(cname)-addr2int(TVM_DATA),
