@@ -3,10 +3,12 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 14:19:23
+ * @LastEditTime : 2020-02-02 15:36:57
  */
 
 #include <iostream>
+
+#define TVM_DEBUG
 
 namespace TVM
 {
@@ -279,6 +281,8 @@ enum TVM_Reg
     R7,
     RH = R7,
     EDI = R7,
+
+    R_END,
 };
 
 struct TCPU
@@ -286,7 +290,7 @@ struct TCPU
     VMINT ip = 0;
     VMINT sp = 0;
     //通用寄存器
-    VMINT r[4] = {0};
+    VMINT r[R_END - R0] = {0};
     //标志寄存器
     int sf = 0;
     int zf = 0;
@@ -317,6 +321,7 @@ public:
         for (;;){
             //取操作指令,然后ip+1
             VMINT op_code = cs[ip++];
+            // std::cout << "do op:" << op_code << std::endl;
             switch (op_code)
             {
             case NOP:
@@ -339,6 +344,37 @@ public:
         }
         return 0;
     }
+
+#ifdef TVM_DEBUG
+private:
+    void show_reg(bool newline = true)
+    {
+        int rn = sizeof(r)/sizeof(VMINT);
+        for (int i = 0; i < rn;++i){
+            printf("R%d=%d ", i, r[i]);
+        }
+        if(newline){
+            printf("\n");
+        }
+    }
+    void show_ip(bool newline = true)
+    {
+        printf("cs:ip=%d:%d",cs,ip);
+        if (newline)
+        {
+            printf("\n");
+        }
+    }
+    void show_flag(bool newline = true)
+    {
+        printf("sf=%d,zf=%d",sf,zf);
+        if (newline)
+        {
+            printf("\n");
+        }
+    }
+#endif
+
 private:
     void mov_ri()
     {
@@ -347,6 +383,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip+1];
         r[a] = b;
+#ifdef TVM_DEBUG
+        printf("mov R%d,%d\n",a,b);
+        show_reg();
+#endif
     }
     void mov_rr()
     {
@@ -355,6 +395,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] = r[b];
+#ifdef TVM_DEBUG
+        printf("mov R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void mov_ai(){
         //第1个操作数(寄存器)
@@ -362,6 +406,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         ds[r[a]] = b;
+#ifdef TVM_DEBUG
+        printf("mov [R%d],%d\n", a, b);
+        show_reg();
+#endif
     }
     void mov_ar()
     {
@@ -370,6 +418,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         ds[r[a]] = r[b];
+#ifdef TVM_DEBUG
+        printf("mov [R%d],R%d\n", a, b);
+        show_reg();
+#endif
     }
     void mov_r_ra(){
         //第1个操作数(寄存器)
@@ -377,6 +429,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] = ds[r[b]];
+#ifdef TVM_DEBUG
+        printf("mov R%d,[R%d]\n", a, b);
+        show_reg();
+#endif
     }
     void mov_r_ia(){
         //第1个操作数(寄存器)
@@ -384,6 +440,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] = ds[b];
+#ifdef TVM_DEBUG
+        printf("mov R%d,[%d]\n", a, b);
+        show_reg();
+#endif
     }
     void mov_byte_ri()
     {
@@ -392,6 +452,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] = ((unsigned char *)ds)[b];
+#ifdef TVM_DEBUG
+        printf("mov byte R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void mov_byte_rr()
     {
@@ -400,6 +464,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] = ((unsigned char *)ds)[r[b]];
+#ifdef TVM_DEBUG
+        printf("mov byte R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void add_ri()
     {
@@ -408,6 +476,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] += b;
+#ifdef TVM_DEBUG
+        printf("add R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void add_rr()
     {
@@ -416,6 +488,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] += r[b];
+#ifdef TVM_DEBUG
+        printf("add R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void sub_ri()
     {
@@ -424,6 +500,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] -= b;
+#ifdef TVM_DEBUG
+        printf("sub R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void sub_rr()
     {
@@ -432,6 +512,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] -= r[b];
+#ifdef TVM_DEBUG
+        printf("sub R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void mul_ri()
     {
@@ -440,6 +524,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] *= b;
+#ifdef TVM_DEBUG
+        printf("mul R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void mul_rr()
     {
@@ -448,6 +536,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] *= r[b];
+#ifdef TVM_DEBUG
+        printf("mul R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void div_ri()
     {
@@ -456,7 +548,11 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[0] = a/b;
-        r[1] = a%b;
+        r[1] = a % b;
+#ifdef TVM_DEBUG
+        printf("div R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void div_rr()
     {
@@ -465,7 +561,11 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[0] = r[a]/r[b];
-        r[1] = r[a]%r[b];
+        r[1] = r[a] % r[b];
+#ifdef TVM_DEBUG
+        printf("div R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void shl_ri()
     {
@@ -474,6 +574,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] <<= b;
+#ifdef TVM_DEBUG
+        printf("shl R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void shl_rr()
     {
@@ -482,6 +586,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] <<= r[b];
+#ifdef TVM_DEBUG
+        printf("shl R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void shr_ri()
     {
@@ -490,6 +598,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] >>= b;
+#ifdef TVM_DEBUG
+        printf("shr R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void shr_rr()
     {
@@ -498,6 +610,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] >>= r[b];
+#ifdef TVM_DEBUG
+        printf("shr R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void xor_ri()
     {
@@ -506,6 +622,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] ^= b;
+#ifdef TVM_DEBUG
+        printf("xor R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void xor_rr()
     {
@@ -514,6 +634,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] ^= r[b];
+#ifdef TVM_DEBUG
+        printf("xor R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void or_ri()
     {
@@ -522,6 +646,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] |= b;
+#ifdef TVM_DEBUG
+        printf("or R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void or_rr()
     {
@@ -530,6 +658,10 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] |= r[b];
+#ifdef TVM_DEBUG
+        printf("or R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void and_ri()
     {
@@ -538,6 +670,10 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] &= b;
+#ifdef TVM_DEBUG
+        printf("and R%d,%d\n", a, b);
+        show_reg();
+#endif
     }
     void and_rr()
     {
@@ -546,11 +682,19 @@ private:
         //第2个操作数(寄存器)
         VMINT b = cs[ip + 1];
         r[a] &= r[b];
+#ifdef TVM_DEBUG
+        printf("and R%d,R%d\n", a, b);
+        show_reg();
+#endif
     }
     void not_r(){
         //第1个操作数(寄存器)
         VMINT a = cs[ip];
         r[a] = ~r[a];
+#ifdef TVM_DEBUG
+        printf("not R%d\n", a);
+        show_reg();
+#endif
     }
     void cmp_ri(){
         //第1个操作数(寄存器)
@@ -572,6 +716,11 @@ private:
             sf = 0;
             zf = 0;
         }
+#ifdef TVM_DEBUG
+        printf("cmp R%d,%d\n", a, b);
+        show_reg();
+        show_flag();
+#endif
     }
     void cmp_rr()
     {
@@ -594,6 +743,11 @@ private:
             sf = 0;
             zf = 0;
         }
+#ifdef TVM_DEBUG
+        printf("cmp R%d,R%d\n", a, b);
+        show_reg();
+        show_flag();
+#endif
     }
     void cmpsb(){
         //第1个操作数(寄存器)
@@ -617,12 +771,22 @@ private:
         //第1个操作数(立即数)
         VMINT a = cs[ip];
         ip += a;
+#ifdef TVM_DEBUG
+        printf("jmp %d\n", a);
+        show_reg();
+        show_ip();
+#endif
     }
     void jmp_r()
     {
         //第1个操作数(寄存器)
         VMINT a = cs[ip];
         ip += r[a];
+#ifdef TVM_DEBUG
+        printf("jmp R%d\n", a);
+        show_reg();
+        show_ip();
+#endif
     }
     void je_i()
     {
@@ -631,6 +795,11 @@ private:
             //第1个操作数(立即数)
             VMINT a = cs[ip];
             ip += a;
+#ifdef TVM_DEBUG
+            printf("je %d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void je_r()
@@ -640,6 +809,11 @@ private:
             //第1个操作数(寄存器)
             VMINT a = cs[ip];
             ip += r[a];
+#ifdef TVM_DEBUG
+            printf("je R%d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void jne_i()
@@ -649,6 +823,11 @@ private:
             //第1个操作数(立即数)
             VMINT a = cs[ip];
             ip += a;
+#ifdef TVM_DEBUG
+            printf("jne %d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void jne_r()
@@ -658,6 +837,11 @@ private:
             //第1个操作数(寄存器)
             VMINT a = cs[ip];
             ip += r[a];
+#ifdef TVM_DEBUG
+            printf("jne R%d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void ja_i()
@@ -667,6 +851,11 @@ private:
             //第1个操作数(立即数)
             VMINT a = cs[ip];
             ip += a;
+#ifdef TVM_DEBUG
+            printf("ja %d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void ja_r()
@@ -676,6 +865,11 @@ private:
             //第1个操作数(寄存器)
             VMINT a = cs[ip];
             ip += r[a];
+#ifdef TVM_DEBUG
+            printf("ja R%d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void jae_i()
@@ -685,6 +879,11 @@ private:
             //第1个操作数(立即数)
             VMINT a = cs[ip];
             ip += a;
+#ifdef TVM_DEBUG
+            printf("jae %d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void jae_r()
@@ -694,6 +893,11 @@ private:
             //第1个操作数(寄存器)
             VMINT a = cs[ip];
             ip += r[a];
+#ifdef TVM_DEBUG
+            printf("jae R%d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void jb_i()
@@ -703,6 +907,11 @@ private:
             //第1个操作数(立即数)
             VMINT a = cs[ip];
             ip += a;
+#ifdef TVM_DEBUG
+            printf("jb %d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void jb_r()
@@ -712,6 +921,11 @@ private:
             //第1个操作数(寄存器)
             VMINT a = cs[ip];
             ip += r[a];
+#ifdef TVM_DEBUG
+            printf("jb R%d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void jbe_i()
@@ -721,6 +935,11 @@ private:
             //第1个操作数(立即数)
             VMINT a = cs[ip];
             ip += a;
+#ifdef TVM_DEBUG
+            printf("jbe %d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void jbe_r()
@@ -730,6 +949,11 @@ private:
             //第1个操作数(寄存器)
             VMINT a = cs[ip];
             ip += r[a];
+#ifdef TVM_DEBUG
+            printf("jbe R%d\n", a);
+            show_reg();
+            show_ip();
+#endif
         }
     }
     void push_i()
@@ -738,18 +962,30 @@ private:
         VMINT a = cs[ip];
         --sp;
         ss[sp] = a;
+#ifdef TVM_DEBUG
+        printf("push %d\n", a);
+        show_reg();
+#endif
     }
     void push_r(){
         //第1个操作数(寄存器)
         VMINT a = cs[ip];
         --sp;
         ss[sp] = r[a];
+#ifdef TVM_DEBUG
+        printf("push R%d\n", a);
+        show_reg();
+#endif
     }
     void pop(){
         //第1个操作数(寄存器)
         VMINT a = cs[ip];
         r[a] = ss[sp];
         ++sp;
+#ifdef TVM_DEBUG
+        printf("pop R%d\n", a);
+        show_reg();
+#endif
     }
     void call_i(){
         //第1个操作数(立即数)
@@ -757,6 +993,10 @@ private:
         --sp;
         ss[sp] = ip + 1;
         ip += a;
+#ifdef TVM_DEBUG
+        printf("call %d\n", a);
+        show_ip();
+#endif
     }
     void call_r()
     {
@@ -765,10 +1005,18 @@ private:
         --sp;
         ss[sp] = ip + 1;
         ip += r[a];
+#ifdef TVM_DEBUG
+        printf("call R%d\n", a);
+        show_ip();
+#endif
     }
     void ret(){
         ip = ss[sp];
         ++sp;
+#ifdef TVM_DEBUG
+        printf("ret\n");
+        show_ip();
+#endif
     }
     void call_user_i()
     {
@@ -776,6 +1024,9 @@ private:
         VMINT a = cs[ip];
         VMINT (*fp)(void *) = reinterpret_cast<VMINT (*)(void *)>(a);
         r[0] = fp(reinterpret_cast<void *>(r[0]));
+#ifdef TVM_DEBUG
+        printf("call user %d\n", a);
+#endif
     }
     void call_user_r()
     {
@@ -783,6 +1034,9 @@ private:
         VMINT a = cs[ip];
         VMINT (*fp)(void *) = reinterpret_cast<VMINT (*)(void *)>(r[a]);
         r[0] = fp(reinterpret_cast<void *>(r[0]));
+#ifdef TVM_DEBUG
+        printf("call user R%d\n", a);
+#endif
     }
 
 public:
@@ -946,18 +1200,20 @@ void test_vm(){
 bool test_vm_pwd(const string& name,const string&pwd){
     //密码=用户名
     using namespace TVM;
-    bool r = true;
+    bool r = false;
     const char *cname = name.c_str();
     const char *cpwd = pwd.c_str();
     VMINT TVM_DATA[100] = {0};
     // //原始代码
-    // if (name.length() != pwd.length()){
-    //     TVM_DATA[0] = 0;
-    // }else{
-    //     if (memcmp(cname, cpwd, pwd.c_str())==0)
+    // if (name.length() == pwd.length()){
+    //     for (int i = 0; i < name.length();++i)
     //     {
-    //         TVM_DATA[0] = 1;
+    //         if (cname[i] + cpwd[i] != 219)
+    //         {
+    //             END;
+    //         }
     //     }
+    //     TVM_DATA[0] = 1;
     // }
     VMINT TVM_CODE[] = {
         //mov r0,name.length()
@@ -970,20 +1226,32 @@ bool test_vm_pwd(const string& name,const string&pwd){
         JE_I,1,
         //END
         END,
-        //mov r1,cname-ds //r1=(VMINT*)cname
-        MOV_RI,R1,addr2int(cname),
-        //mov r2,cpwd-ds //r2=(VMINT*)cpwd
-        MOV_RI,R2,addr2int(cpwd),
-        //mov r0,pwd.length()
-        MOV_RI,R0,(VMINT)pwd.length(),
-        //cmpsb r1,r2
-        CMPSB,R1,R2,
-        //jne 6 //不相等就跳过赋值1
-        JNE_I,6,
+        //mov r1,cname-ds //r1=(VMINT*)cname-ds
+        MOV_RI,R1,addr2int(cname)-addr2int(TVM_DATA),
+        //mov r2,cpwd-ds //r2=(VMINT*)cpwd-ds
+        MOV_RI,R2,addr2int(cpwd)-addr2int(TVM_DATA),
         //mov r0,0
         MOV_RI,R0,0,
-        //mov [r0],1
+        //cmp r0,pwd.length()
+        CMP_RI,R0,(VMINT)pwd.length(),
+        //jb 1 //r0<len
+        JB_I,7,
+        MOV_RI,R0,0,
         MOV_RA_I,R0,1,
+        END,
+        MOV_RR,R3,R1,
+        ADD_RR,R3,R0,//r3=cname-ds+i
+        MOV_BYTE_RR,R3,R3,//r3=cname[i]
+        MOV_RR,R4,R2,
+        ADD_RR,R4,R0,//r4=cpwd-ds+i
+        MOV_BYTE_RR,R4,R4,//r4=cpwd[i]
+        ADD_RR,R3,R4,
+        CMP_RI,R3,219,//r3+r4==219?
+        JE_I,1,
+        END,
+        //r3+r4==219
+        ADD_RI,R0,1,
+        JMP_I,-44,
         END,
     };
     TCPU tc(TVM_CODE, TVM_DATA);
@@ -1003,10 +1271,10 @@ int main(int argc, char const *argv[])
     }
 
     TVM::Init();
-    test_vm();
-    bool f=test_vm_pwd("123","234");
+    // test_vm();
+    bool f=test_vm_pwd("abcdef","zyxwvu");
     cout << f << endl;
-    f = test_vm_pwd("123", "123");
+    f = test_vm_pwd("abc", "abc");
     cout << f << endl;
     return 0;
 }
