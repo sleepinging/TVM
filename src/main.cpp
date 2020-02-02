@@ -3,12 +3,12 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 15:36:57
+ * @LastEditTime : 2020-02-02 15:43:00
  */
 
 #include <iostream>
 
-#define TVM_DEBUG
+// #define TVM_DEBUG
 
 namespace TVM
 {
@@ -1262,19 +1262,9 @@ bool test_vm_pwd(const string& name,const string&pwd){
 
 int main(int argc, char const *argv[])
 {
-    const char *str1 = "123";
-    const char *str2 = "234";
-    for(int i=0;i<3;++i){
-        if(str1[i]+1!=str2[i]){
-            return 0;
-        }
-    }
-
     TVM::Init();
-    // test_vm();
-    bool f=test_vm_pwd("abcdef","zyxwvu");
-    cout << f << endl;
-    f = test_vm_pwd("abc", "abc");
-    cout << f << endl;
+    test_vm();
+    cout << test_vm_pwd("abc", "abc") << endl;
+    cout << test_vm_pwd("abcdef", "zyxwvu") << endl;
     return 0;
 }
