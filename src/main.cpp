@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 13:58:51
+ * @LastEditTime : 2020-02-02 14:19:23
  */
 
 #include <iostream>
@@ -42,6 +42,13 @@ enum TVM_OP_CODE : VMINT
     //mov r0,[0]
     //r0=ds[0]
     MOV_R_IA,
+
+    //mov_byte r0,[100]
+    //r0=((unsigned char*)ds)[100]
+    MOV_BYTE_RI,
+
+    MOV_BYTE_RR,
+    MOV_BYTE = MOV_BYTE_RR,
 
     //add r0,1
     //r0+=1
@@ -377,6 +384,22 @@ private:
         //第2个操作数(立即数)
         VMINT b = cs[ip + 1];
         r[a] = ds[b];
+    }
+    void mov_byte_ri()
+    {
+        //第1个操作数(寄存器)
+        VMINT a = cs[ip];
+        //第2个操作数(立即数)
+        VMINT b = cs[ip + 1];
+        r[a] = ((unsigned char *)ds)[b];
+    }
+    void mov_byte_rr()
+    {
+        //第1个操作数(寄存器)
+        VMINT a = cs[ip];
+        //第2个操作数(寄存器)
+        VMINT b = cs[ip + 1];
+        r[a] = ((unsigned char *)ds)[r[b]];
     }
     void add_ri()
     {
@@ -772,6 +795,8 @@ void Init(){
     ops[MOV_AR] = {MOV_AR, &TCPU::mov_ar, 2};
     ops[MOV_R_RA] = {MOV_R_RA, &TCPU::mov_r_ra, 2};
     ops[MOV_R_IA] = {MOV_R_IA, &TCPU::mov_r_ia, 2};
+    ops[MOV_BYTE_RI] = {MOV_BYTE_RI, &TCPU::mov_byte_ri, 2};
+    ops[MOV_BYTE_RR] = {MOV_BYTE_RR, &TCPU::mov_byte_rr, 2};
     ops[ADD_RI] = {ADD_RI, &TCPU::add_ri, 2};
     ops[ADD_RR] = {ADD_RR, &TCPU::add_rr, 2};
     ops[SUB_RI] = {SUB_RI, &TCPU::sub_ri, 2};
@@ -887,7 +912,7 @@ void test_vm(){
         SHL_RI,R0,1,
         SHR_RR,R0,R1,
 
-        //测试用户函数调用,20-2
+        //测试用户函数user_fun_sub调用,20-2
         MOV_RI,R1,20,
         MOV_RI,R2,2,
         //data[10:]里面放参数
@@ -897,6 +922,10 @@ void test_vm(){
         MOV_RA_R,R0,R2,//data[11]=r2
         MOV_RI,R0,addr2int(TVM_DATA)+(VMINT)sizeof(VMINT)*10,
         CALL_U_I,addr2int((void*)user_fun_sub),
+
+        //测试mov byte
+        MOV_RI,R0,8,
+        MOV_BYTE_RR,R2,R0,
 
         // //测试jmp等
         // MOV_RI,R0,0,//r0=0
