@@ -3,7 +3,7 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 12:05:04
+ * @LastEditTime : 2020-02-02 12:23:24
  */
 
 #include <iostream>
@@ -80,12 +80,17 @@ enum TVM_OP_CODE
     DIV_RR,
     DIV = DIV_RR,
 
+    OR_RI,
+
+    OR_RR,
+    OR=OR_RR,
+
     //xor r0,10
-    //r0|=10
+    //r0^=10
     XOR_RI,
 
     //xor r0,r1
-    //r0|=r1
+    //r0^=r1
     XOR_RR,
     XOR = XOR_RR,
 
@@ -95,6 +100,8 @@ enum TVM_OP_CODE
 
     AND_RR,
     AND = AND_RR,
+
+    NOT,
 
     //左移
     //shl r0,1
@@ -402,6 +409,59 @@ private:
         r[0] = r[a]/r[b];
         r[1] = r[a]%r[b];
     }
+    void xor_ri()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(立即数)
+        int b = cs[ip + 1];
+        r[a] ^= b;
+    }
+    void xor_rr()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(寄存器)
+        int b = cs[ip + 1];
+        r[a] ^= r[b];
+    }
+    void or_ri()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(立即数)
+        int b = cs[ip + 1];
+        r[a] |= b;
+    }
+    void or_rr()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(寄存器)
+        int b = cs[ip + 1];
+        r[a] |= r[b];
+    }
+    void and_ri()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(立即数)
+        int b = cs[ip + 1];
+        r[a] &= b;
+    }
+    void and_rr()
+    {
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        //第2个操作数(寄存器)
+        int b = cs[ip + 1];
+        r[a] &= r[b];
+    }
+    void not_r(){
+        //第1个操作数(寄存器)
+        int a = cs[ip];
+        r[a] = ~r[a];
+    }
     void cmp_ri(){
         //第1个操作数(寄存器)
         int a = cs[ip];
@@ -638,6 +698,13 @@ void Init(){
     ops[MUL_RR] = {MUL_RR, &TCPU::mul_rr, 2};
     ops[DIV_RI] = {DIV_RI, &TCPU::div_ri, 2};
     ops[DIV_RR] = {DIV_RR, &TCPU::div_rr, 2};
+    ops[AND_RI] = {AND_RI, &TCPU::and_ri, 2};
+    ops[AND_RR] = {AND_RR, &TCPU::and_rr, 2};
+    ops[OR_RI] = {OR_RI, &TCPU::or_ri, 2};
+    ops[OR_RR] = {OR_RR, &TCPU::or_rr, 2};
+    ops[XOR_RI] = {XOR_RI, &TCPU::xor_ri, 2};
+    ops[XOR_RR] = {XOR_RR, &TCPU::xor_rr, 2};
+    ops[NOT] = {NOT, &TCPU::not_r, 1};
 
     ops[CMPSB] = {CMPSB, &TCPU::cmpsb, 2};
 
@@ -713,15 +780,20 @@ void test_vm(){
         MOV_RI,R0,sizeof(stra)-1-1,
         CMPSB,R1,R2,
 
-        //测试jmp等
-        MOV_RI,R0,0,//r0=0
-        MOV_RI,R1,1,//r1=1
-        MOV_RI,R2,3,//r2=3
-        CMP_RR,R0,R1,//r0 ? r1
-        JAE_R,R2,
-        ADD_RI,R0,1,
-        ADD_RI,R0,1,//是否会跳到这
-        ADD_RI,R0,1,
+        //测试与 或 非 异或
+        MOV_RI,R0,10,
+        MOV_RI,R1,200,
+        NOT,R0,
+
+        // //测试jmp等
+        // MOV_RI,R0,0,//r0=0
+        // MOV_RI,R1,1,//r1=1
+        // MOV_RI,R2,3,//r2=3
+        // CMP_RR,R0,R1,//r0 ? r1
+        // JAE_R,R2,
+        // ADD_RI,R0,1,
+        // ADD_RI,R0,1,//是否会跳到这
+        // ADD_RI,R0,1,
         END,
     };
     TCPU tc(TVM_CODE+12,TVM_DATA);
