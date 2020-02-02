@@ -3,17 +3,18 @@
  * @Author: taowentao
  * @Date: 2020-02-01 12:05:25
  * @LastEditors  : taowentao
- * @LastEditTime : 2020-02-02 12:34:51
+ * @LastEditTime : 2020-02-02 13:58:51
  */
 
 #include <iostream>
 
 namespace TVM
 {
-enum TVM_OP_CODE
+typedef int VMINT;
+enum TVM_OP_CODE : VMINT
 {
     //不需要用到，用来计算指令个数的,同时可以判断是否为无效操作
-    START=0,
+    START = 0,
 
     //mov r0,1
     //r0=1
@@ -83,7 +84,7 @@ enum TVM_OP_CODE
     OR_RI,
 
     OR_RR,
-    OR=OR_RR,
+    OR = OR_RR,
 
     //xor r0,10
     //r0^=10
@@ -147,6 +148,13 @@ enum TVM_OP_CODE
     //ip+=r0
     CALL_R,
     CALL = CALL_R,
+
+    //call_user 调用C函数 VMINT fun(void arg*)
+    //参数从r0取出，返回值放入r0
+    CALL_U_I,
+
+    CALL_U_R,
+    CALL_U = CALL_U_R,
 
     //ret
     //pop ip
@@ -221,7 +229,7 @@ class TCPU;
 struct TVM_OP
 {
     //操作码
-    int op_code;
+    VMINT op_code;
     //对应的函数
     void (TCPU::*fun)();
     //几个操作数
@@ -251,39 +259,43 @@ enum TVM_Reg
 
     R4,
     RE = R4,
+    EBP = R4,
 
     R5,
     RF = R5,
+    ESP = R5,
 
     R6,
     RG = R6,
+    ESI = R6,
 
     R7,
     RH = R7,
+    EDI = R7,
 };
 
 struct TCPU
 {
-    int ip = 0;
-    int sp = 0;
+    VMINT ip = 0;
+    VMINT sp = 0;
     //通用寄存器
-    int r[4] = {0};
+    VMINT r[4] = {0};
     //标志寄存器
     int sf = 0;
     int zf = 0;
     //段寄存器
-    int *ss = nullptr;
-    int *ds = nullptr;
-    int *cs = nullptr;
+    VMINT *ss = nullptr;
+    VMINT *ds = nullptr;
+    VMINT *cs = nullptr;
 
 public:
-    TCPU(int *vm_code_addr,int* data_addr=nullptr, int stack_size = 2048)
+    TCPU(VMINT *vm_code_addr,VMINT* data_addr=nullptr, VMINT stack_size = 2048)
     {
         //cs:ip=代码入口
         cs = vm_code_addr;
         ip = 0;
         //分配堆空间
-        ss = new int[stack_size];
+        ss = new VMINT[stack_size];
         sp = stack_size;
         ds = data_addr;
     }
@@ -297,7 +309,7 @@ public:
     int Run(){
         for (;;){
             //取操作指令,然后ip+1
-            int op_code = cs[ip++];
+            VMINT op_code = cs[ip++];
             switch (op_code)
             {
             case NOP:
@@ -324,204 +336,204 @@ private:
     void mov_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip+1];
+        VMINT b = cs[ip+1];
         r[a] = b;
     }
     void mov_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] = r[b];
     }
     void mov_ai(){
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         ds[r[a]] = b;
     }
     void mov_ar()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         ds[r[a]] = r[b];
     }
     void mov_r_ra(){
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] = ds[r[b]];
     }
     void mov_r_ia(){
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] = ds[b];
     }
     void add_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] += b;
     }
     void add_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] += r[b];
     }
     void sub_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] -= b;
     }
     void sub_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] -= r[b];
     }
     void mul_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] *= b;
     }
     void mul_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] *= r[b];
     }
     void div_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[0] = a/b;
         r[1] = a%b;
     }
     void div_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[0] = r[a]/r[b];
         r[1] = r[a]%r[b];
     }
     void shl_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] <<= b;
     }
     void shl_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] <<= r[b];
     }
     void shr_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] >>= b;
     }
     void shr_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] >>= r[b];
     }
     void xor_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] ^= b;
     }
     void xor_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] ^= r[b];
     }
     void or_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] |= b;
     }
     void or_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] |= r[b];
     }
     void and_ri()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] &= b;
     }
     void and_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         r[a] &= r[b];
     }
     void not_r(){
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         r[a] = ~r[a];
     }
     void cmp_ri(){
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(立即数)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         if (r[a] == b)
         {
             sf = 0;
@@ -541,9 +553,9 @@ private:
     void cmp_rr()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         if (r[a] == r[b])
         {
             sf = 0;
@@ -562,9 +574,9 @@ private:
     }
     void cmpsb(){
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         //第2个操作数(寄存器)
-        int b = cs[ip + 1];
+        VMINT b = cs[ip + 1];
         const char *pca = reinterpret_cast<char *>(r[a]);
         const char *pcb = reinterpret_cast<char *>(r[b]);
         int len = r[0];
@@ -580,13 +592,13 @@ private:
     }
     void jmp_i(){
         //第1个操作数(立即数)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         ip += a;
     }
     void jmp_r()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         ip += r[a];
     }
     void je_i()
@@ -594,7 +606,7 @@ private:
         if (zf == 1)
         {
             //第1个操作数(立即数)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += a;
         }
     }
@@ -603,7 +615,7 @@ private:
         if (zf == 1)
         {
             //第1个操作数(寄存器)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += r[a];
         }
     }
@@ -612,7 +624,7 @@ private:
         if (zf == 0)
         {
             //第1个操作数(立即数)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += a;
         }
     }
@@ -621,7 +633,7 @@ private:
         if (zf == 0)
         {
             //第1个操作数(寄存器)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += r[a];
         }
     }
@@ -630,7 +642,7 @@ private:
         if (sf == 0 && zf == 0)
         {
             //第1个操作数(立即数)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += a;
         }
     }
@@ -639,7 +651,7 @@ private:
         if (sf == 0 && zf == 0)
         {
             //第1个操作数(寄存器)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += r[a];
         }
     }
@@ -648,7 +660,7 @@ private:
         if (zf==1 || sf == 0)
         {
             //第1个操作数(立即数)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += a;
         }
     }
@@ -657,7 +669,7 @@ private:
         if (zf == 1 || sf == 0)
         {
             //第1个操作数(寄存器)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += r[a];
         }
     }
@@ -666,7 +678,7 @@ private:
         if (sf == 1 && zf == 0)
         {
             //第1个操作数(立即数)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += a;
         }
     }
@@ -675,7 +687,7 @@ private:
         if (sf == 1 && zf == 0)
         {
             //第1个操作数(寄存器)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += r[a];
         }
     }
@@ -684,7 +696,7 @@ private:
         if (zf == 1 || sf == 1)
         {
             //第1个操作数(立即数)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += a;
         }
     }
@@ -693,32 +705,32 @@ private:
         if (zf == 1 || sf == 1)
         {
             //第1个操作数(寄存器)
-            int a = cs[ip];
+            VMINT a = cs[ip];
             ip += r[a];
         }
     }
     void push_i()
     {
         //第1个操作数(立即数)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         --sp;
         ss[sp] = a;
     }
     void push_r(){
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         --sp;
         ss[sp] = r[a];
     }
     void pop(){
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         r[a] = ss[sp];
         ++sp;
     }
     void call_i(){
         //第1个操作数(立即数)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         --sp;
         ss[sp] = ip + 1;
         ip += a;
@@ -726,7 +738,7 @@ private:
     void call_r()
     {
         //第1个操作数(寄存器)
-        int a = cs[ip];
+        VMINT a = cs[ip];
         --sp;
         ss[sp] = ip + 1;
         ip += r[a];
@@ -735,6 +747,21 @@ private:
         ip = ss[sp];
         ++sp;
     }
+    void call_user_i()
+    {
+        //第1个操作数(立即数)
+        VMINT a = cs[ip];
+        VMINT (*fp)(void *) = reinterpret_cast<VMINT (*)(void *)>(a);
+        r[0] = fp(reinterpret_cast<void *>(r[0]));
+    }
+    void call_user_r()
+    {
+        //第1个操作数(寄存器)
+        VMINT a = cs[ip];
+        VMINT (*fp)(void *) = reinterpret_cast<VMINT (*)(void *)>(r[a]);
+        r[0] = fp(reinterpret_cast<void *>(r[0]));
+    }
+
 public:
     friend void Init();
 };
@@ -773,6 +800,8 @@ void Init(){
 
     ops[CALL_I] = {CALL_I, &TCPU::call_i, 1};
     ops[CALL_R] = {CALL_R, &TCPU::call_r, 1};
+    ops[CALL_U_R] = {CALL_U_R, &TCPU::call_user_r, 1};
+    ops[CALL_U_I] = {CALL_U_I, &TCPU::call_user_i, 1};
     ops[RET] = {RET, &TCPU::ret, 0};
 
     ops[JMP_I] = {JMP_I, &TCPU::jmp_i, 1};
@@ -801,17 +830,25 @@ void Init(){
 
 using namespace std;
 
+TVM::VMINT user_fun_sub(void* arg){
+    struct args{TVM::VMINT a;TVM::VMINT b;};
+    args *pargs = (args *)arg;
+    return pargs->a - pargs->b;
+}
+
+TVM::VMINT addr2int(const void* addr){
+    const TVM::VMINT *paddr = (const TVM::VMINT *)addr;
+    return *(TVM::VMINT *)&paddr;
+}
+
 void test_vm(){
     using namespace TVM;
-    int a = 101, b = 203;
+    VMINT a = 101, b = 203;
     char stra[] = "hello1";
     char strb[] = "hello2";
-    char *pa = stra;
-    char *pb = strb;
-    int pstra = *(int *)&pa;
-    int pstrb = *(int *)&pb;
-    int TVM_DATA[100] = {0, 11, 22};
-    int TVM_CODE[] = {
+    VMINT TVM_DATA[100] = {0, 11, 22};
+
+    VMINT TVM_CODE[] = {
         //子函数add
         POP,R3,//保存IP
         POP,R0,
@@ -834,8 +871,8 @@ void test_vm(){
         MOV_R_RA,R2,R0,
 
         //测试cmpsb
-        MOV_RI,R1,pstra,
-        MOV_RI,R2,pstrb,
+        MOV_RI,R1,addr2int(stra),
+        MOV_RI,R2,addr2int(strb),
         MOV_RI,R0,sizeof(stra)-1-1,
         CMPSB,R1,R2,
 
@@ -849,6 +886,17 @@ void test_vm(){
         MOV_RI,R1,2,
         SHL_RI,R0,1,
         SHR_RR,R0,R1,
+
+        //测试用户函数调用,20-2
+        MOV_RI,R1,20,
+        MOV_RI,R2,2,
+        //data[10:]里面放参数
+        MOV_RI,R0,10,
+        MOV_RA_R,R0,R1,//data[10]=r1
+        MOV_RI,R0,11,
+        MOV_RA_R,R0,R2,//data[11]=r2
+        MOV_RI,R0,addr2int(TVM_DATA)+(VMINT)sizeof(VMINT)*10,
+        CALL_U_I,addr2int((void*)user_fun_sub),
 
         // //测试jmp等
         // MOV_RI,R0,0,//r0=0
@@ -871,10 +919,8 @@ bool test_vm_pwd(const string& name,const string&pwd){
     using namespace TVM;
     bool r = true;
     const char *cname = name.c_str();
-    int pname = *(int *)&cname;
     const char *cpwd = pwd.c_str();
-    int ppwd = *(int *)&pwd;
-    int TVM_DATA[100] = {0};
+    VMINT TVM_DATA[100] = {0};
     // //原始代码
     // if (name.length() != pwd.length()){
     //     TVM_DATA[0] = 0;
@@ -884,23 +930,23 @@ bool test_vm_pwd(const string& name,const string&pwd){
     //         TVM_DATA[0] = 1;
     //     }
     // }
-    int TVM_CODE[] = {
+    VMINT TVM_CODE[] = {
         //mov r0,name.length()
-        MOV_RI,R0,(int)name.length(),
+        MOV_RI,R0,(VMINT)name.length(),
         //mov r1,pwd.length()
-        MOV_RI,R1,(int)pwd.length(),
+        MOV_RI,R1,(VMINT)pwd.length(),
         //cmp r0,r1
         CMP,R0,R1,
         //je 1
         JE_I,1,
         //END
         END,
-        //mov r1,ds[cname-ds] //r1=*(int*)cname
-        MOV_RI,R1,pname,
-        //mov r2,ds[cpwd-ds] //r2=*(int*)cname
-        MOV_RI,R2,ppwd,
+        //mov r1,cname-ds //r1=(VMINT*)cname
+        MOV_RI,R1,addr2int(cname),
+        //mov r2,cpwd-ds //r2=(VMINT*)cpwd
+        MOV_RI,R2,addr2int(cpwd),
         //mov r0,pwd.length()
-        MOV_RI,R0,(int)pwd.length(),
+        MOV_RI,R0,(VMINT)pwd.length(),
         //cmpsb r1,r2
         CMPSB,R1,R2,
         //jne 6 //不相等就跳过赋值1
@@ -919,6 +965,14 @@ bool test_vm_pwd(const string& name,const string&pwd){
 
 int main(int argc, char const *argv[])
 {
+    const char *str1 = "123";
+    const char *str2 = "234";
+    for(int i=0;i<3;++i){
+        if(str1[i]+1!=str2[i]){
+            return 0;
+        }
+    }
+
     TVM::Init();
     test_vm();
     bool f=test_vm_pwd("123","234");
